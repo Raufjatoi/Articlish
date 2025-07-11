@@ -38,8 +38,10 @@ export interface MonthlyStats {
   authors: number;
 }
 
-// Update the API_URL to point to our local server
-const API_URL = 'http://localhost:3001/api';
+// Update the API_URL to point to your Vercel-deployed backend
+const API_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:3001/api' 
+  : 'https://your-backend-url.vercel.app/api';  // Replace with your actual Vercel URL
 
 // Set this to false to use the real API
 const useMockData = false;
@@ -121,6 +123,7 @@ export const fetchComments = async () => {
   const result = await api.getComments();
   return result.comments;
 };
+
 
 
 

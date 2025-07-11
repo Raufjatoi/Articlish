@@ -4,10 +4,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
-// MongoDB connection string
-const uri = "mongodb+srv://raufpokemon00:<db_password>@cluster0.hplvo4f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// MongoDB connection string - use environment variable for security
+const uri = process.env.MONGODB_URI || "mongodb+srv://raufpokemon00:<db_password>@cluster0.hplvo4f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const DB_NAME = "articlish";
 const COLLECTIONS = {
   AUTHORS: "authors",
@@ -16,13 +15,17 @@ const COLLECTIONS = {
 };
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow all origins for now
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(bodyParser.json());
 
 // Database connection
-let db;
+let cachedDb = null;
 async function connectToDatabase() {
-  if (db) return db;
+  if (cachedDb) return cachedDb;
   
   try {
     // Add connection options to handle TLS issues
@@ -35,14 +38,19 @@ async function connectToDatabase() {
       serverSelectionTimeoutMS: 5000
     });
     
-    db = client.db(DB_NAME);
+    cachedDb = client.db(DB_NAME);
     console.log('Connected to MongoDB');
-    return db;
+    return cachedDb;
   } catch (error) {
     console.error('MongoDB connection error:', error);
     throw error;
   }
 }
+
+// Health check route
+app.get('/', (req, res) => {
+  res.status(200).send('Articlish API is running');
+});
 
 // Routes
 // Authors API
@@ -519,9 +527,14 @@ app.get('/api/stats/monthly', async (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// For Vercel, we need to export the Express app
+module.exports = app;
 
+// Only start the server if we're running directly (not on Vercel)
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
 
