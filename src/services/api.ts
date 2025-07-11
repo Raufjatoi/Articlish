@@ -1,5 +1,6 @@
 
-// API service for MongoDB integration
+// API service for data fetching
+
 export interface Author {
   id: string;
   name: string;
@@ -37,47 +38,79 @@ export interface MonthlyStats {
   authors: number;
 }
 
-// Temporary placeholder functions that will be replaced with MongoDB calls
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Update the API_URL to point to our local server
+const API_URL = 'http://localhost:3001/api';
+
+// Set this to false to use the real API
+const useMockData = false;
+
+// Helper function for API requests
+async function fetchAPI(endpoint: string, options = {}) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    ...options,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+// Add a function to create a new author
+export async function createAuthor(author: { name: string; email: string; avatar?: string }): Promise<Author> {
+  return fetchAPI('/authors', {
+    method: 'POST',
+    body: JSON.stringify(author)
+  });
+}
+
+// Add a function to create a new post
+export async function createPost(post: { title: string; content: string; authorId: string; tags?: string[] }): Promise<Post> {
+  return fetchAPI('/posts', {
+    method: 'POST',
+    body: JSON.stringify(post)
+  });
+}
+
+// Add a function to create a new comment
+export async function createComment(comment: { content: string; authorId: string; postId: string }): Promise<Comment> {
+  return fetchAPI('/comments', {
+    method: 'POST',
+    body: JSON.stringify(comment)
+  });
+}
 
 export const api = {
   async getAuthors(): Promise<Author[]> {
-    // TODO: Replace with MongoDB aggregation
-    await delay(800);
-    return [];
+    return fetchAPI('/authors');
   },
 
   async getPosts(sortBy: 'newest' | 'mostCommented' = 'newest'): Promise<Post[]> {
-    // TODO: Replace with MongoDB aggregation
-    await delay(600);
-    return [];
+    return fetchAPI(`/posts?sortBy=${sortBy}`);
   },
 
   async getComments(page: number = 1, limit: number = 10): Promise<{ comments: Comment[], total: number }> {
-    // TODO: Replace with MongoDB aggregation
-    await delay(500);
-    return {
-      comments: [],
-      total: 0
-    };
+    return fetchAPI(`/comments?page=${page}&limit=${limit}`);
   },
 
   async getTopAuthors(): Promise<Author[]> {
-    // TODO: Replace with MongoDB aggregation
-    await delay(400);
-    return [];
+    return fetchAPI('/authors/top');
   },
 
   async getTopCommentedPosts(): Promise<Post[]> {
-    // TODO: Replace with MongoDB aggregation
-    await delay(500);
-    return [];
+    return fetchAPI('/posts/top-commented');
   },
 
   async getMonthlyStats(): Promise<MonthlyStats[]> {
-    // TODO: Replace with MongoDB aggregation
-    await delay(700);
-    return [];
+    return fetchAPI('/stats/monthly');
+  },
+
+  async createAuthor(author: { name: string; email: string; avatar?: string }): Promise<Author> {
+    return createAuthor(author);
   }
 };
 
@@ -88,4 +121,13 @@ export const fetchComments = async () => {
   const result = await api.getComments();
   return result.comments;
 };
+
+
+
+
+
+
+
+
+
 

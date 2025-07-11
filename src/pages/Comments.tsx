@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Reply, Edit, Trash2, ThumbsUp } from 'lucide-react';
+import { MessageSquare, Plus, Edit, Trash2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchComments, Comment } from '../services/api';
+import { api, Comment } from '../services/api';
 import AppNavigation from '../components/AppNavigation';
 import Footer from '../components/Footer';
+import AddCommentForm from '../components/AddCommentForm';
 
 const Comments = () => {
-  const { data: comments, isLoading, error } = useQuery<Comment[]>({
-    queryKey: ['comments'],
-    queryFn: fetchComments,
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['comments', page, limit],
+    queryFn: () => api.getComments(page, limit),
   });
+
+  const comments = data?.comments || [];
+  const totalComments = data?.total || 0;
+  const totalPages = Math.ceil(totalComments / limit);
 
   if (isLoading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   if (error) return <div className="flex justify-center items-center min-h-screen text-red-500">Error loading comments</div>;
@@ -40,22 +49,6 @@ const Comments = () => {
             ))}
           </div>
         </div>
-
-        {/* Right side scattered squares */}
-        <div className="absolute right-0 top-0 w-1/4 md:w-1/3 h-full">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 md:w-4 md:h-4 bg-purple-400 rounded-sm animate-float"
-              style={{
-                top: `${Math.random() * 100}%`,
-                right: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
-              }}
-            ></div>
-          ))}
-        </div>
       </div>
 
       <AppNavigation />
@@ -67,41 +60,49 @@ const Comments = () => {
             Comments<span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl">.</span>
           </h1>
           <p className="text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
-            Manage user comments and engagement
+            Manage user feedback and discussions
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 mb-6 md:mb-8">
-          <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-black" />
-          <span className="text-lg md:text-xl font-semibold text-black">
-            {comments?.length || 0} Comments
-          </span>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 space-y-4 sm:space-y-0">
+          <div className="flex items-center space-x-2">
+            <MessageSquare className="w-5 h-5 md:w-6 md:h-6 text-black" />
+            <span className="text-lg md:text-xl font-semibold text-black">
+              {totalComments} Comments
+            </span>
+          </div>
+          <Button 
+            className="bg-black text-white hover:bg-gray-800 w-full sm:w-auto"
+            onClick={() => setShowAddForm(!showAddForm)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {showAddForm ? 'Cancel' : 'Add New Comment'}
+          </Button>
         </div>
 
-        <div className="space-y-4 md:space-y-6">
-          {comments?.map((comment) => (
+        {/* Add Comment Form */}
+        {showAddForm && (
+          <div className="mb-8">
+            <AddCommentForm />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:gap-6">
+          {comments.map((comment) => (
             <div
               key={comment.id}
               className="bg-white/90 backdrop-blur-sm rounded-lg p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h4 className="text-base md:text-lg font-semibold text-black">
-                      {comment.authorName}
-                    </h4>
-                    <span className="text-xs md:text-sm text-gray-500">
-                      on {comment.postTitle}
-                    </span>
-                  </div>
-                  <p className="text-sm md:text-base text-gray-800 leading-relaxed">
-                    {comment.content}
+              <div className="flex flex-col md:flex-row md:items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg md:text-xl font-semibold text-black mb-1">
+                    Re: {comment.postTitle}
+                  </h3>
+                  <p className="text-sm md:text-base text-gray-600 mb-2">
+                    By {comment.authorName} • {new Date(comment.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex space-x-2 ml-4">
-                  <Button size="sm" variant="outline" className="p-2">
-                    <Reply className="w-3 h-3 md:w-4 md:h-4" />
-                  </Button>
+                <div className="flex space-x-2 mt-2 md:mt-0">
                   <Button size="sm" variant="outline" className="p-2">
                     <Edit className="w-3 h-3 md:w-4 md:h-4" />
                   </Button>
@@ -111,25 +112,45 @@ const Comments = () => {
                 </div>
               </div>
               
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="flex items-center space-x-4">
-                  <button className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors">
-                    <ThumbsUp className="w-3 h-3 md:w-4 md:h-4" />
-                    <span className="text-xs md:text-sm">
-                      {Math.floor(Math.random() * 20) + 1}
-                    </span>
-                  </button>
-                  <Button size="sm" variant="ghost" className="text-xs md:text-sm">
-                    Reply
-                  </Button>
-                </div>
-                <span className="text-xs md:text-sm text-gray-500">
-                  {Math.floor(Math.random() * 7) + 1} days ago
-                </span>
+              <div className="text-sm md:text-base text-gray-700">
+                {comment.content}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-8">
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <Button
+                  key={p}
+                  variant={p === page ? "default" : "outline"}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </Button>
+              ))}
+              
+              <Button 
+                variant="outline" 
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
       <Footer />
     </div>
@@ -137,4 +158,5 @@ const Comments = () => {
 };
 
 export default Comments;
+
 

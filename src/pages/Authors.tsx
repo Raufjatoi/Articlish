@@ -1,13 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Users, Edit, Trash2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAuthors, Author } from '../services/api';
 import AppNavigation from '../components/AppNavigation';
 import Footer from '../components/Footer';
+import AddAuthorForm from '../components/AddAuthorForm';
 
 const Authors = () => {
+  const [showAddForm, setShowAddForm] = useState(false);
   const { data: authors, isLoading, error } = useQuery<Author[]>({
     queryKey: ['authors'],
     queryFn: fetchAuthors,
@@ -20,40 +22,16 @@ const Authors = () => {
     <div className="min-h-screen bg-gradient-to-br from-cyan-300 via-blue-200 to-purple-300 overflow-hidden relative">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-6 md:left-10 w-20 md:w-32 h-4 md:h-8 bg-yellow-400 rounded-full transform rotate-12 animate-bounce"></div>
-        <div className="absolute top-40 right-10 md:right-20 w-4 md:w-6 h-4 md:h-6 bg-purple-500 rounded-lg animate-pulse"></div>
-        <div className="absolute bottom-40 left-1/4 w-3 md:w-4 h-3 md:h-4 bg-yellow-400 rounded-full animate-ping"></div>
+        {/* Yellow curved shape */}
+        <div className="absolute top-20 left-4 md:left-10 w-48 md:w-96 h-16 md:h-32 bg-yellow-400 rounded-full transform rotate-45 animate-bounce"></div>
         
-        {/* Pixelated pattern */}
-        <div className="absolute left-0 top-1/4 w-48 md:w-96 h-48 md:h-96 opacity-20">
-          <div className="grid grid-cols-8 md:grid-cols-12 gap-1 h-full">
-            {Array.from({ length: 96 }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-1 h-1 md:w-2 md:h-2 ${
-                  Math.random() > 0.7 ? 'bg-yellow-400' : 'bg-transparent'
-                } animate-pulse`}
-                style={{ animationDelay: `${Math.random() * 2}s` }}
-              ></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right side scattered squares */}
-        <div className="absolute right-0 top-0 w-1/4 md:w-1/3 h-full">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 md:w-4 md:h-4 bg-purple-400 rounded-sm animate-float"
-              style={{
-                top: `${Math.random() * 100}%`,
-                right: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
-              }}
-            ></div>
-          ))}
-        </div>
+        {/* Purple geometric shapes */}
+        <div className="absolute top-40 right-10 md:right-20 w-12 md:w-20 h-12 md:h-20 bg-purple-500 rounded-lg animate-pulse"></div>
+        <div className="absolute top-60 right-20 md:right-40 w-8 md:w-16 h-8 md:h-16 bg-purple-400 rounded-lg animate-pulse delay-300"></div>
+        
+        {/* Additional floating elements */}
+        <div className="absolute bottom-40 left-1/4 w-3 md:w-4 h-3 md:h-4 bg-yellow-400 rounded-full animate-ping"></div>
+        <div className="absolute bottom-20 right-1/3 w-6 md:w-8 h-6 md:h-8 bg-purple-400 rounded-lg animate-bounce"></div>
       </div>
 
       <AppNavigation />
@@ -76,17 +54,28 @@ const Authors = () => {
               {authors?.length || 0} Authors
             </span>
           </div>
-          <Button className="bg-black text-white hover:bg-gray-800 w-full sm:w-auto">
+          <Button 
+            className="bg-black text-white hover:bg-gray-800 w-full sm:w-auto"
+            onClick={() => setShowAddForm(!showAddForm)}
+          >
             <UserPlus className="w-4 h-4 mr-2" />
-            Add New Author
+            {showAddForm ? 'Cancel' : 'Add New Author'}
           </Button>
         </div>
+
+        {/* Add Author Form */}
+        {showAddForm && (
+          <div className="mb-8">
+            <AddAuthorForm />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {authors?.map((author) => (
             <div
               key={author.id}
-              className="bg-white/90 backdrop-blur-sm rounded-lg p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className="bg-white/90 backdrop-blur-sm rounded-lg p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fadeInUp"
+              style={{ animationDelay: `${Math.random() * 0.5}s` }}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -127,4 +116,6 @@ const Authors = () => {
 };
 
 export default Authors;
+
+
 
